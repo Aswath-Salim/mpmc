@@ -1,0 +1,82 @@
+#include<stdio.h>
+
+// Structure to represent a process
+struct Process {
+    int pid; // Process ID
+    int burst_time; // Burst time
+    int arrival_time; // Arrival time
+    int remaining_time; // Remaining burst time
+};
+
+// Function to calculate average waiting time and turn around time
+void calculateTimes(struct Process processes[], int n, int quantum) {
+    int remaining_burst[n]; // Array to store remaining burst time
+    int waiting_time[n]; // Array to store waiting time
+    int turnaround_time[n]; // Array to store turn around time
+    int total_waiting_time = 0;
+    int total_turnaround_time = 0;
+
+    // Initialize remaining_burst array with burst time of each process
+    for (int i = 0; i < n; i++) {
+        remaining_burst[i] = processes[i].burst_time;
+    }
+
+    int current_time = 0; // Current time
+    int completed = 0; // Number of processes completed
+
+    // Run until all processes are completed
+    while (completed < n) {
+        // Traverse all processes
+        for (int i = 0; i < n; i++) {
+            // If process is not completed
+            if (remaining_burst[i] > 0) {
+                // Reduce remaining burst time by quantum
+                if (remaining_burst[i] > quantum) {
+                    current_time += quantum;
+                    remaining_burst[i] -= quantum;
+                } else {
+                    // Process completes execution
+                    current_time += remaining_burst[i];
+                    waiting_time[i] = current_time - processes[i].burst_time - processes[i].arrival_time;
+                    turnaround_time[i] = current_time - processes[i].arrival_time;
+                    total_waiting_time += waiting_time[i];
+                    total_turnaround_time += turnaround_time[i];
+                    remaining_burst[i] = 0;
+                    completed++;
+                }
+            }
+        }
+    }
+
+    // Print results
+    printf("Process ID\tBurst Time\tArrival Time\tWaiting Time\tTurnaround Time\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\n", processes[i].pid, processes[i].arrival_time, processes[i].burst_time, waiting_time[i], turnaround_time[i]);
+    }
+    printf("Average Waiting Time: %.2f\n", (float)total_waiting_time / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_turnaround_time / n);
+}
+
+int main() {
+    int n; // Number of processes
+    int quantum; // Time quantum
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+    printf("Enter the time quantum: ");
+    scanf("%d", &quantum);
+
+    struct Process processes[n]; // Array of processes
+
+    // Input process details
+    printf("Enter process details (PID, arrival Time, burst Time):\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d: ", i + 1);
+        scanf("%d %d %d", &processes[i].pid, &processes[i].arrival_time, &processes[i].burst_time);
+        processes[i].remaining_time = processes[i].burst_time;
+    }
+
+    // Calculate average waiting time and turn around time
+    calculateTimes(processes, n, quantum);
+
+    return 0;
+}
