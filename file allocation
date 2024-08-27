@@ -1,0 +1,165 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_FILES 10
+#define MAX_BLOCKS 512
+
+// Struct for Sequential File Allocation
+typedef struct {
+    int startBlock;
+    int length;
+} SequentialFile;
+
+SequentialFile sequentialFiles[MAX_FILES];
+
+// Struct for Indexed File Allocation
+typedef struct {
+    int blocks[MAX_BLOCKS];
+    int length;
+} IndexedFile;
+
+IndexedFile indexedFiles[MAX_FILES];
+
+// Struct for Linked File Allocation
+typedef struct Node {
+    int blockIndex;
+    struct Node* next;
+} Node;
+
+typedef struct {
+    Node* head;
+} LinkedFile;
+
+LinkedFile linkedFiles[MAX_FILES];
+
+void createSequentialFile(int fileIndex, int length) {
+    int i;
+    for (i = 0; i < MAX_FILES; i++) {
+        if (sequentialFiles[i].length == 0) {
+            sequentialFiles[i].startBlock = i * length;
+            sequentialFiles[i].length = length;
+            break;
+        }
+    }
+    if (i == MAX_FILES) {
+        printf("Error: No space available for the new file.\n");
+    } else {
+        printf("Sequential File created at block %d.\n", sequentialFiles[i].startBlock);
+    }
+}
+
+void createIndexedFile(int fileIndex, int length) {
+    int i;
+    for (i = 0; i < MAX_FILES; i++) {
+        if (indexedFiles[i].length == 0) {
+            for (int j = 0; j < length; j++) {
+                indexedFiles[i].blocks[j] = i * MAX_BLOCKS + j;
+            }
+            indexedFiles[i].length = length;
+            break;
+        }
+    }
+    if (i == MAX_FILES) {
+        printf("Error: No space available for the new file.\n");
+    } else {
+        printf("Indexed File created with index %d.\n", i);
+    }
+}
+
+void appendBlock(int fileIndex, int blockIndex) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->blockIndex = blockIndex;
+    newNode->next = NULL;
+
+    Node* current = linkedFiles[fileIndex].head;
+    if (current == NULL) {
+        linkedFiles[fileIndex].head = newNode;
+    } else {
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+}
+
+void createLinkedFile(int fileIndex, int length) {
+    for (int i = 0; i < length; i++) {
+        appendBlock(fileIndex, fileIndex * length + i);
+    }
+    printf("Linked File created with index %d.\n", fileIndex);
+}
+
+void printSequentialBlocks(int fileIndex) {
+    printf("Sequential File %d: Blocks %d to %d\n", fileIndex, sequentialFiles[fileIndex].startBlock, sequentialFiles[fileIndex].startBlock + sequentialFiles[fileIndex].length - 1);
+}
+
+void printIndexedBlocks(int fileIndex) {
+    printf("Indexed File %d: Blocks ", fileIndex);
+    for (int j = 0; j < indexedFiles[fileIndex].length; j++) {
+        printf("%d ", indexedFiles[fileIndex].blocks[j]);
+    }
+    printf("\n");
+}
+
+void printLinkedBlocks(int fileIndex) {
+    Node* current = linkedFiles[fileIndex].head;
+    printf("Linked File %d: Blocks ", fileIndex);
+    while (current != NULL) {
+        printf("%d ", current->blockIndex);
+        current = current->next;
+    }
+    printf("\n");
+}
+
+int main() {
+    int choice, fileIndex, length;
+
+    while (1) {
+        printf("\nChoose File Allocation Strategy:\n");
+        printf("1. Sequential\n");
+        printf("2. Indexed\n");
+        printf("3. Linked\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter file index and length: ");
+                scanf("%d %d", &fileIndex, &length);
+                createSequentialFile(fileIndex, length);
+                break;
+            case 2:
+                printf("Enter file index and length: ");
+                scanf("%d %d", &fileIndex, &length);
+                createIndexedFile(fileIndex, length);
+                break;
+            case 3:
+                printf("Enter file index and length: ");
+                scanf("%d %d", &fileIndex, &length);
+                createLinkedFile(fileIndex, length);
+                break;
+            case 4:
+                printf("Exiting...\n");
+                exit(0);
+            default:
+                printf("Invalid choice. Please enter a valid choice.\n");
+        }
+
+        // Printing allocated blocks
+        printf("\nAllocated Blocks:\n");
+        for (int i = 0; i < MAX_FILES; i++) {
+            if (sequentialFiles[i].length != 0) {
+                printSequentialBlocks(i);
+            }
+            if (indexedFiles[i].length != 0) {
+                printIndexedBlocks(i);
+            }
+            if (linkedFiles[i].head != NULL) {
+                printLinkedBlocks(i);
+            }
+        }
+    }
+
+    return 0;
+}
