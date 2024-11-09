@@ -1,0 +1,89 @@
+.model small
+.stack 100h
+
+.data
+    num1 dw 15
+    num2 dw 5
+    add_result dw 0
+    sub_result dw 0
+    mul_result dw 0
+    div_result dw 0
+    msg_add db 'Addition Result: $'
+    msg_sub db 'Subtraction Result: $'
+    msg_mul db 'Multiplication Result: $'
+    msg_div db 'Division Result: $'
+    buffer db 6 dup('$')
+
+.code
+main:
+    mov ax, @data
+    mov ds, ax
+
+    mov ax, num1
+    add ax, num2
+    mov add_result, ax
+
+    mov ax, num1
+    sub ax, num2
+    mov sub_result, ax
+
+    mov ax, num1
+    mov bx, num2
+    mul bx
+    mov mul_result, ax
+
+    mov ax, num1
+    mov dx, 0
+    mov bx, num2
+    div bx
+    mov div_result, ax
+
+    mov ah, 09h
+    lea dx, msg_add
+    int 21h
+    mov ax, add_result
+    call PrintNum
+
+    mov ah, 09h
+    lea dx, msg_sub
+    int 21h
+    mov ax, sub_result
+    call PrintNum
+
+    mov ah, 09h
+    lea dx, msg_mul
+    int 21h
+    mov ax, mul_result
+    call PrintNum
+
+    mov ah, 09h
+    lea dx, msg_div
+    int 21h
+    mov ax, div_result
+    call PrintNum
+
+    mov ah, 4Ch
+    int 21h
+
+PrintNum proc
+    mov bx, 10
+    lea di, buffer + 5
+    mov cx, 0
+
+convert_loop:
+    dec di
+    xor dx, dx
+    div bx
+    add dl, '0'
+    mov [di], dl
+    inc cx
+    test ax, ax
+    jnz convert_loop
+
+    mov ah, 09h
+    lea dx, [di]
+    int 21h
+    ret
+PrintNum endp
+
+end main
